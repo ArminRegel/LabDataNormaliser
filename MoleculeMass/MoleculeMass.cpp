@@ -18,18 +18,20 @@ const std::string ATOMIC_MASSES_FILEPATH = "AtomicMasses.csv";
 int main()
 {
     loadAtomicMassesFromCSV();
-    /*
-    atomicMasses["H"] = 1.008;
-    atomicMasses["Na"] = 22.990;
-    atomicMasses["O"] = 15.999;
-    atomicMasses["C"] = 12.011;
-    atomicMasses["He"] = 4.002602;
-    */
 
-    std::cout << "Give me a molecule!\n";
+    while (true) {
+
+    std::cout << "Give me a molecule!\nenter q to quit.\n";
     std::string molecularFormula;
     std::cin >> molecularFormula;
-    std::cout << calculateMolecularMass(molecularFormula);
+    if (molecularFormula == "q") return 0;
+
+    double mass = calculateMolecularMass(molecularFormula);
+    std::cout << "Molecular mass: " << mass << "\n\n";
+    
+    
+    }
+
 
 }
 
