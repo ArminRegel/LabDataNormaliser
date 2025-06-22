@@ -21,17 +21,22 @@ int main()
 
     while (true) {
 
-    std::cout << "Give me a molecule!\nenter q to quit.\n";
-    std::string molecularFormula;
-    std::cin >> molecularFormula;
-    if (molecularFormula == "q") return 0;
+        std::cout << "Give me a molecule!\nenter q to quit.\n";
+        std::string molecularFormula;
+        std::cin >> molecularFormula;
+        if (molecularFormula == "q") return 0;
 
-    double mass = calculateMolecularMass(molecularFormula);
-    std::cout << "Molecular mass: " << mass << "\n\n";
-    
-    
+        try {
+            double mass = calculateMolecularMass(molecularFormula);
+            std::cout << "Molecular mass: " << mass << "\n\n";
+
+        }
+        catch (const char* exceptionText) {
+            std::cout << "Molecule mass calculation unsucessfull: " << exceptionText << "\n";
+        }
+
+
     }
-
 
 }
 
