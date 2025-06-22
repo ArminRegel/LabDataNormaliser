@@ -61,7 +61,8 @@ float calculateMolecularMass(std::string molecularFormula) {
     else {
         
         atomicMass = calculateAtomicMass(molecularFormula.substr(0, 2));
-        if (molecularFormula.at(2) < '0' || molecularFormula.at(2) > '9') return atomicMass + calculateMolecularMass(molecularFormula.substr(2)); ;//if (no number after Atomic Symbol)
+
+        if (molecularFormula.length() <= 2 || molecularFormula.at(2) < '0' || molecularFormula.at(2) > '9') return atomicMass + calculateMolecularMass(molecularFormula.substr(2)); ;//if (no number after Atomic Symbol)
         atomAmmountIndex = 2; 
     }
         
