@@ -1,19 +1,30 @@
 
 
+
+
 #include <iostream>
 #include <string>
 #include <unordered_map>
 #include <fstream>
 
+#ifdef _DEBUG
+#define DEBUG_PRINT(x) std::cout << x << std::endl
+#else
+#define DEBUG_PRINT(x)
+#endif
+
 void loadAtomicMassesFromCSV();
-float calculateMolecularMass(std::string molecularFormula);
+float calculateMolecularMass(const std::string& molecularFormula);
 
 std::unordered_map<std::string, float> atomicMasses;
-float calculateAtomicMass(std::string atomicSymbol);
+float calculateAtomicMass(const std::string& atomicSymbol);
 
 const std::string ATOMIC_MASSES_FILEPATH = "AtomicMasses.csv";
 
+bool isOpeningBracket(char character);
+bool isClosingBracket(char character);
 
+std::pair<int, int> parseNumber(const std::string& str, int start);
 
 int main()
 {
@@ -21,7 +32,7 @@ int main()
 
     while (true) {
 
-        std::cout << "Give me a molecule!\nenter q to quit.\n";
+        std::cout << "Give me a molecule!\nenter q to quit." << "\n";
         std::string molecularFormula;
         std::cin >> molecularFormula;
         if (molecularFormula == "q") return 0;
@@ -41,26 +52,60 @@ int main()
 }
 
 
+bool isOpeningBracket(char character) {
+    return character == '(' || character == '[' || character == '{';
+}
+bool isClosingBracket(char character) {
+    return character == ')' || character == ']' || character == '}';
+}
 
-float calculateMolecularMass(std::string molecularFormula) {
+float calculateMolecularMass(const std::string& molecularFormula) {
+    DEBUG_PRINT("molecular formula = " << molecularFormula);
     if (molecularFormula.length() <= 0) return 0;
     if (molecularFormula.length() == 1) return calculateAtomicMass(molecularFormula);
 
     float atomicMass;
-    int atomAmmountIndex;
+    int atomAmountIndex;
 
+
+    if (isOpeningBracket(molecularFormula.at(0))) {
+        int openBrackets = 1;
+        for (int i = 1; i < molecularFormula.length(); ++i) {
+            DEBUG_PRINT("open brackets = " << openBrackets );
+            if (isOpeningBracket(molecularFormula.at(i))) {
+                ++openBrackets;
+            }
+            else if (isClosingBracket(molecularFormula.at(i))) {
+                --openBrackets;
+                DEBUG_PRINT("closing bracket detected");
+                if (openBrackets <= 0) {
+                    std::pair<int, int> atomAmountAndEndIndex;
+                    if (molecularFormula.length() >= i + 2 && isdigit(molecularFormula.at(i + 1))) {
+                        atomAmountAndEndIndex = parseNumber(molecularFormula, i + 1);
+
+                    }
+                    else {
+                        atomAmountAndEndIndex = { 1,i + 1 };
+                    }
+                    DEBUG_PRINT("atomAmmountAndEndIndex: " << atomAmountAndEndIndex.first << ", " << atomAmountAndEndIndex.second);
+                    return calculateMolecularMass(molecularFormula.substr(1, i - 1)) * atomAmountAndEndIndex.first + calculateMolecularMass(molecularFormula.substr(atomAmountAndEndIndex.second));
+                }
+            }
+        } throw "bracket not closed";
+
+    }
+
+    if (molecularFormula.at(0) < 'A' || molecularFormula.at(0) > 'Z') throw "molecularFormulaBroken";
+
+    
     //Figure out Atomic Mass
-    if (molecularFormula.at(0) <= 'A' || molecularFormula.at(0) >= 'Z') throw "molecularFormulaBroken";
-
-
-
-    if (molecularFormula.at(1) >= 'A' && molecularFormula.at(1) <= 'Z') return calculateAtomicMass(molecularFormula.substr(0,1)) + calculateMolecularMass(molecularFormula.substr(1));
+    if ( isOpeningBracket(molecularFormula.at(1)) || (molecularFormula.at(1) >= 'A' && molecularFormula.at(1) <= 'Z') ) return calculateAtomicMass(molecularFormula.substr(0,1)) + calculateMolecularMass(molecularFormula.substr(1));
 
 
     else if (molecularFormula.at(1) >= '1' && molecularFormula.at(1) <= '9') {//if number
         atomicMass = calculateAtomicMass(molecularFormula.substr(0, 1));
         
-        atomAmmountIndex = 1;
+        atomAmountIndex = 1;
     }
 
     else {
@@ -68,25 +113,32 @@ float calculateMolecularMass(std::string molecularFormula) {
         atomicMass = calculateAtomicMass(molecularFormula.substr(0, 2));
 
         if (molecularFormula.length() <= 2 || molecularFormula.at(2) < '0' || molecularFormula.at(2) > '9') return atomicMass + calculateMolecularMass(molecularFormula.substr(2)); ;//if (no number after Atomic Symbol)
-        atomAmmountIndex = 2; 
+        atomAmountIndex = 2; 
     }
         
+    std::pair<int,int> atomAmmountAndEndIndex = parseNumber(molecularFormula, atomAmountIndex);
 
-    //Figure out Ammount of Atoms, right now this part of the code will only be reached, if a number for the ammount of atoms exists
-    int atomAmmount = 0;
-    //std::cout << "atomicMass = " << atomicMass << "\n";
 
-    while (atomAmmountIndex < molecularFormula.length() && molecularFormula.at(atomAmmountIndex) >= '0' && molecularFormula.at(atomAmmountIndex) <= '9') {
-        atomAmmount *= 10;
-        atomAmmount += molecularFormula.at(atomAmmountIndex) - '0'; // character - '0' turns it into int
-        ++atomAmmountIndex;
-    }
 
-    return atomicMass * atomAmmount + calculateMolecularMass(molecularFormula.substr(atomAmmountIndex));
+    return atomicMass * atomAmmountAndEndIndex.first + calculateMolecularMass(molecularFormula.substr(atomAmmountAndEndIndex.second));
 
 }
 
-float calculateAtomicMass(std::string atomicSymbol) {
+//creates a number from a string at the position start and gives the position AFTER the last number character; returns 0 and start if not a number
+std::pair<int, int> parseNumber(const std::string& string, int start) {
+
+    int number = 0;
+    //std::cout << "atomicMass = " << atomicMass << "\n";
+
+    while (start < string.length() && string.at(start) >= '0' && string.at(start) <= '9') {
+        number *= 10;
+        number += string.at(start) - '0'; // character - '0' turns it into int
+        ++start;
+    }
+    return{ number, start };
+}
+
+float calculateAtomicMass(const std::string& atomicSymbol) {
 
     auto iterator = atomicMasses.find(atomicSymbol);
     
