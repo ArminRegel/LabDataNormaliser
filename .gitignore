@@ -16,7 +16,6 @@
 *.ilk
 *.o
 *.tmp
-*.log
 *.vs/
 Debug/
 Release/
