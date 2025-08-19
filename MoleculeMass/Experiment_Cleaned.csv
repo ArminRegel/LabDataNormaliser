@@ -1,0 +1,17 @@
+Timestamp,Sample,Compound,Molar Mass (g/mol),Mass conc (g/L),Molar conc (mol/L),Comment,Corrupted?
+,,NaCl,58.4398,58.44, , ,False
+,,C6H12O6,180.156,90, , ,False
+,,C2H6O,46.069,46, , ,False
+,,H2SO4,98.072,, , ,False
+,,CaCl2,110.978,111, , ,False
+,,NaCl,58.4398,2.922, , ,False
+,,KOH,56.1053,100, , ,False
+,,KOH,56.1053,1e+11, , ,False
+,,KOH,56.1053,0.0001, , ,False
+,,KOH,56.1053,0.0001, , ,False
+,,KOH,56.1053,"0.1 JONAS ug/mL; corruption detected", , ,True
+,,KOH,56.1053,"0.000.1 ug/mL; corruption detected", , ,True
+,,KOH,56.1053,"0.1 grafikkarte/mittellos; corruption detected", , ,True
+,,KOH,56.1053,"0.1 grafikkarte/mittellos; corruption detected", , ,True
+,,KOH,56.1053,"a0.1 ug/mL; corruption detected", , ,True
+,,KOH,56.1053,"0.1 g/mLJONAS; corruption detected", , ,True
