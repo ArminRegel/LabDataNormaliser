@@ -1,0 +1,33 @@
+Timestamp,Sample,Compound,Mass conc (g/L),Molar conc (mol/L),Comment
+2023-02-01 09:00,S01,Salt,0.050 g / L,,"only mass,spacing"
+01-02-2023 09:37,S02,C6H12O6,0.050 g/L - pending,,"only mass,annotation"
+2023-02-01 10:14,S03,Alcohol,,0.05 mol L,"only molar,unit variant"
+01-02-2023 10:51,S04,H2SO4,0.050 g/L (?),,"only mass,annotation"
+2023-02-01 11:28,S05,H₂SO₄,0.05,,"only mass,case variant"
+01-02-2023 12:05,S06,KaliSalt,,,none
+2023-02-01 12:42,S07,KOH,0.050 G/L,,"only mass,case variant"
+02-02-2023 13:19,S08,CaCl2,0.050 g/L ~,,"only mass,annotation"
+2023-02-02 13:56,S09,C12H22O11,,,none
+02-02-2023 14:33,S10,NH3,,,none
+2023-02-02 15:10,S11,CH3COOH,,0.05 mmol/L,"only molar,mmol variant"
+02-02-2023 15:47,S12,HNO3,58.44 g/L,,only mass
+2023-02-02 16:24,S13,Na₂SO₄,,0.05 mmol/L,"only molar,mmol variant"
+02-02-2023 17:01,S14,MgCl2,,0.05 cmol/L,"only molar,cmol variant"
+2023-02-03 17:38,S15,FeCl3,0.050  g/L,0.05 mol/l,"both conc.,spacing"
+03-02-2023 18:15,S16,Water,2.922 g/L,0.1622,both conc.
+2023-02-03 18:52,S17,NaCl,0.050 g/L (?),,"only mass,annotation"
+03-02-2023 19:29,S18,C6H12O6,,,none
+2023-02-03 20:06,S19,C2H6O,58.44 g/L,,only mass
+03-02-2023 20:43,S20,H2SO4,0.050 g per L,,"only mass,unit variant"
+2023-02-03 21:20,S21,H₂SO₄,0.050 g/ L,,"only mass,spacing"
+04-02-2023 21:57,S22,KCl,,0.05 mol / L,"only molar,spacing"
+2023-02-04 22:34,S23,KOH,,,none
+04-02-2023 23:11,S24,CaCl2,"4,904 g/L",,"only mass,dec. Comma"
+2023-02-04 23:48,S25,C12H22O11,,,none
+05-02-2023 00:25,S26,NH3,"0.050 g/L, check",,"only mass, annotation"
+2023-02-05 01:02,S27,CH3COOH,,0.05mol/L,only molar
+05-02-2023 01:39,S28,HNO3,,50 mmol/L,"only molar,mmol/l variant"
+2023-02-06 02:16,S29,Na₂SO₄,90 g/L,0.050 mol/l,both conc.
+06-02-2023 02:53,S30,MgCl2,0.050 G/L,0.05,"both conc.,case variant,unit variant"
+2023-02-06 03:30,S31,FeCl3,111 g/L,,only mass
+06-02-2023 04:07,S32,H₂O,34.5 g/l,,only mass

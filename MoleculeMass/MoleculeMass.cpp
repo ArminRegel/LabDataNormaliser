@@ -8,9 +8,12 @@
 #include <fstream>
 #include <bitset>
 #include <algorithm>
+#include <utility>
 
+#include <chrono>
 
 std::ofstream debugLogger("debugLog.txt");
+
 
 #ifdef _DEBUG
 #define DEBUG_PRINT(x) do {std::cout << x << std::endl; \
@@ -32,10 +35,10 @@ float calculateMolecularMass(const std::string& molecularFormula);
 std::unordered_map<std::string, float> atomicMasses;
 float calculateAtomicMass(const std::string& atomicSymbol);
 
-std::string normaliseMolecularFormula(const std::string& formula);
+
 
 const std::string ATOMIC_MASSES_FILEPATH = "AtomicMasses.csv";
-const std::string LABDATA_FILEPATH = "Experiment_Roh.csv";
+const std::string LABDATA_FILEPATH = "Experiment_Raw.csv";
 const std::string LABDATA_CLEANED_FILEPATH = "Experiment_Cleaned.csv";
 
 bool isOpeningBracket(char character);
@@ -44,6 +47,16 @@ bool isClosingBracket(char character);
 std::pair<int, int> parseNumber(const std::string& str, int start);
 
 const size_t CSV_Line_Size = 6;
+
+double concentrationFromString(const std::string& concentration, const std::string& numeratorUnit = "g");
+
+void make_csv_safe(std::string & string);
+
+void normaliseMolecularFormula(std::string & formula);
+
+std::string currentWarning = "";
+//keeps adding warning messages, they will be written down in the last column of the current csvline
+void addWarning(std::string warning) { currentWarning += warning + ";"; }
 
 std::unordered_map<std::string, double> si_prefixes = {
     {"", 1},        //No Prefix
@@ -62,18 +75,41 @@ std::unordered_map<std::string, double> si_prefixes = {
     {"u", 1e-6 }    // Mikro Alternative
 };
 
+
+std::unordered_map<std::string, char> subscripts = {
+    {"₀", '0'},
+    {"₁", '1'},
+    {"₂", '2'},
+    {"₃", '3'},
+    {"₄", '4'},
+    {"₅", '5'},
+    {"₆", '6'},
+    {"₇", '7'},
+    {"₈", '8'},
+    {"₉", '9'}
+};
+
 int main()
 {
     
+    auto start = std::chrono::high_resolution_clock::now();
+
     //std::ofstream debugLogger("debugLog.txt");
     //if (!out) ;             // Fehlerprüfung
 
+    /*
     std::string text = "Hallo Welt! ₀₁₂"; // Beispieltext mit Subskripten
     debugLogger << text << "\n";
-    
+    */
+
     //DEBUG_PRINT( "why dis not in file? \n");
 
     loadAtomicMassesFromCSV();
+
+
+    //std::pair<std::string,std::string> joeMama;
+
+    
 
 
     std::ofstream labdataWriter(LABDATA_CLEANED_FILEPATH);
@@ -83,7 +119,7 @@ int main()
     std::ifstream labdataReader(LABDATA_FILEPATH);
 
     if (!labdataReader.is_open()) {
-        throw "atomicMassesTableNotFound";
+        throw "labdata file not found";
     }
 
     std::string line;
@@ -96,136 +132,281 @@ int main()
 
         std::vector<std::string> CSV_Line = splitCSV(line);
         
+        //just simple proof of concept, no error checking like with concentration
+        if (CSV_Line[0].size() == 16 && CSV_Line[0][2] == '-') {
+            
+            std::string output = CSV_Line[0].substr(6, 4) + '-' +
+                CSV_Line[0].substr(3,2) + '-' +
+                CSV_Line[0].substr(0,2) + ' '
+                + CSV_Line[0].substr(11, 5);
+            CSV_Line[0] = output;
+        }
+        
+        make_csv_safe(CSV_Line[0]);
+        labdataWriter << CSV_Line[0] << ',';
+
+        make_csv_safe(CSV_Line[1]);
+        labdataWriter << CSV_Line[1] << ',';
+
         //calculate molar mass
-        std::string molecularFormula = CSV_Line[2];
-        DEBUG_PRINT("initial molecularFormula = " << molecularFormula);
+        DEBUG_PRINT("initial molecularFormula = " << CSV_Line[2]);
+        normaliseMolecularFormula(CSV_Line[2]);
+        DEBUG_PRINT("normalised molecularFormula = " << CSV_Line[2]);
+        
 
         //molecularFormula = normaliseMolecularFormula(molecularFormula);
-
-        double mass = calculateMolecularMass(molecularFormula);
-        RELEASE_PRINT("Molecular Mass = " << mass << "\n");
-        labdataWriter << ",," << molecularFormula << "," << mass << ",";
-
-        //correct mass concentration (replace commas with points)
-
-        //removes all spaces from the string
-        std::string originalMassConcentrationLine = CSV_Line[3];
-
-        CSV_Line[3].erase(std::remove(CSV_Line[3].begin(), CSV_Line[3].end(), ' '), CSV_Line[3].end());
-        DEBUG_PRINT("line after whitespace removal : " << CSV_Line[3] << "\n");
-        
-
-        //bool stillNumber = true;
-        std::string numberString = "";
-        size_t i = 0;
-        bool massConcentrationCorrupted = false;
-        bool numberOnly = true;
-
-        for (; i < CSV_Line[3].size(); ++i) {
-            if ((CSV_Line[3][i] >= '0' && CSV_Line[3][i] <= '9') || CSV_Line[3][i] == ',' || CSV_Line[3][i] == '.') {
-                numberString.push_back(CSV_Line[3][i] == ',' ? '.' : CSV_Line[3][i]);
-                
-
-            }
-            else {
-                numberOnly = false;
-                break;
-                
-            }
+        double mass = std::nan("");
+        try {
+            mass = calculateMolecularMass(CSV_Line[2]);
+            DEBUG_PRINT("Molecular Mass = " << mass << "\n");
+            labdataWriter << CSV_Line[2] << "," << mass << ",";
+        }
+        catch (...) {
+            addWarning("Could not parse sum formula: " + CSV_Line[2]);
+            make_csv_safe(CSV_Line[2]);
+            labdataWriter << CSV_Line[2] << "," << "" << ",";
+            
+            mass = std::nan("");
         }
 
-        DEBUG_PRINT("Concentration base number = " << numberString);
 
-        std::string massPrefixString = "";
+
+        //will become safified if it has corrupted content
+        std::string massConcentrationLine = CSV_Line[3];
+        std::string molConcentrationLine = CSV_Line[4];
+
+        double massConcentrationParsed;
+        double molConcentrationParsed;
+
+        //if(massConcentration exists -> write massConcentration
+
         
+
+
+        massConcentrationParsed = concentrationFromString(massConcentrationLine, "g");
+        molConcentrationParsed = concentrationFromString(molConcentrationLine, "mol");
+
+        double molConcentrationCalculated = std::nan("");
         
-        if (!numberOnly) for (; true; ++i) {
-            //if no mass unit found before string end
-            if (i >= CSV_Line[3].size()) {
-                massConcentrationCorrupted = true;
-                DEBUG_PRINT("Corruption 1");
-                break;
+
+        if (massConcentrationLine != "") {
+            if (std::isnan(massConcentrationParsed)) {
+                addWarning("mass concentration corrupted");
+                make_csv_safe(massConcentrationLine);
+                labdataWriter << massConcentrationLine << ',';
+                //is mol concentration missing? YES!
             }
-            
-            if (CSV_Line[3][i] != 'g') massPrefixString += CSV_Line[3][i];
+            //else == if (proper massConcentration)
             else {
-                if (i < CSV_Line[3].size() && CSV_Line[3][i+1] == '/') {
-                    i += 2;
-                    break;
+                labdataWriter << massConcentrationParsed;
+                molConcentrationCalculated = massConcentrationParsed / mass;
+            
+                
+                labdataWriter << ',';
+
+                if (molConcentrationLine == "") {
+                    if (!std::isnan(molConcentrationCalculated)) labdataWriter << molConcentrationCalculated;
                 }
                 else {
-                    massConcentrationCorrupted = true;
-                    DEBUG_PRINT("Corruption 2");
-                    i = CSV_Line[3].size();//skip next loop if corrupted
-                    break;
+                    if (std::isnan(molConcentrationParsed)) {
+                        addWarning("mol concentration corrupted");
+                        make_csv_safe(molConcentrationLine);
+                        labdataWriter << molConcentrationLine;
+
+                    }
+                    else {
+                        labdataWriter << molConcentrationParsed;
+                        double molConcentrationProportion = molConcentrationParsed / molConcentrationCalculated;
+                        if (std::isnan(molConcentrationProportion)) addWarning("concentration ratio check unsucessful");
+                        else if (molConcentrationProportion < 0.95 || molConcentrationProportion > 1.05) addWarning("concentration ratio implausible");
+                    }
                 }
             }
-
         }
-        DEBUG_PRINT("massPrefixString = " << massPrefixString);
-
-
-        std::string volumePrefixString = "";
-        
-        if (!numberOnly) for (; true; ++i) {
-            if (CSV_Line[3][i] == 'l' || CSV_Line[3][i] == 'L') {
-                //if theres still other characters after l char
-                if (i+1 < CSV_Line[3].size() ) {
-                    massConcentrationCorrupted = true;
-                    DEBUG_PRINT("Corruption 3");
-                        
+        //else == if (massConcentrationLine == "")
+        else {
+            if (molConcentrationLine != "") {
+                if (std::isnan(molConcentrationParsed)) {
+                    addWarning("mol concentration corrupted");
+                    make_csv_safe(molConcentrationLine);
+                    labdataWriter << ',' << molConcentrationLine;
                 }
-                break;
-   
-            } else  volumePrefixString += CSV_Line[3][i];
-            //if no mass unit found before string end
-            if (i >= CSV_Line[3].size()) {
-                massConcentrationCorrupted = true;
-                DEBUG_PRINT("Corruption 4");
-                break;
-            }
-        }
-
-        DEBUG_PRINT("volumePrefixString = " << volumePrefixString);
-        double massConcentration;
-        
-        if (!originalMassConcentrationLine.empty()) {
-            try {
-                DEBUG_PRINT("Entering massConcentration calculation");
-
-                size_t charAfterNumber;
-                massConcentration = std::stod(numberString, &charAfterNumber);
-                if (charAfterNumber < numberString.size()) massConcentrationCorrupted = true;
-                DEBUG_PRINT("initial massConcentration = " << massConcentration);
-
-                double massPrefix = si_prefixes[massPrefixString];
-                if (massPrefix == 0) massConcentrationCorrupted = true;
-                DEBUG_PRINT("massPrefix = " << massPrefix);
-
-                double volumePrefix = si_prefixes[volumePrefixString];
-                if (volumePrefix == 0) massConcentrationCorrupted = true;
-                DEBUG_PRINT("volumePrefix = " << volumePrefix);
-
-                massConcentration *= massPrefix / volumePrefix;
-            }
-            catch (...) {
-                massConcentrationCorrupted = true;
-            }
-
-            if (massConcentrationCorrupted == true) {
-                labdataWriter << "\"" << originalMassConcentrationLine << "; corruption detected\"";
+                else {
+                    double massConcentrationCalculated = molConcentrationParsed * mass;
+                    
+                    if (!std::isnan(massConcentrationCalculated)) labdataWriter << massConcentrationCalculated;
+                    labdataWriter << ',' << molConcentrationParsed;
+                }
+                
             }
             else {
-                labdataWriter << massConcentration;
+                labdataWriter << ',';
             }
         }
-        labdataWriter << ", , ," << (massConcentrationCorrupted ? "True": "False") << "\n";
+
+
+        labdataWriter << ",";
+        std::string commentLine = CSV_Line[5];
+        make_csv_safe(commentLine);
+        labdataWriter << commentLine;
+        if(!currentWarning.empty()) currentWarning.pop_back();
+        labdataWriter << "," << currentWarning << "\n";
+        currentWarning = "";
 
     }
     
 
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> duration = end - start;
+    RELEASE_PRINT("ExecutionTime: " << duration.count() << " ms");
+}
+
+
+void make_csv_safe(std::string& string) {
+
+    std::string safeString = "\"";
+    bool problematicChar = false;
+    for (char c : string) {
+        safeString.push_back(c);
+        if (c == '"') {
+            safeString.push_back('"');
+            problematicChar = true;
+        }
+        else if (c == ',' || c == '\n' || c == '\r') {
+            problematicChar = true;
+
+        }
+
+
+    }
+    safeString += '"';
+    if (problematicChar) string = safeString;
+}
+
+
+double concentrationFromString(const std::string& originalConcentrationString, const std::string& numeratorUnit) {
+
+    std::string concentration = originalConcentrationString;
+    
+    //removes all spaces from the string
+    concentration.erase(std::remove(concentration.begin(), concentration.end(), ' '), concentration.end());
+    DEBUG_PRINT("line after whitespace removal : " << concentration << "\n");
+
+
+    //bool stillNumber = true;
+    std::string numberString = "";
+    size_t i = 0;
+    //bool massConcentrationCorrupted = false;
+    bool numberOnly = true;
+
+    for (; i < concentration.size(); ++i) {
+        if ((concentration[i] >= '0' && concentration[i] <= '9') || concentration[i] == ',' || concentration[i] == '.') {
+            numberString.push_back(concentration[i] == ',' ? '.' : concentration[i]);
+
+
+        }
+        else {
+            numberOnly = false;
+            break;
+
+        }
+    }
+
+    DEBUG_PRINT("Concentration base number = " << numberString);
+
+    double massConcentration;
+
+    
+
+    try {
+        DEBUG_PRINT("calculation massConcentration base number");
+        size_t charAfterNumber;
+        massConcentration = std::stod(numberString, &charAfterNumber);
+        if (charAfterNumber < numberString.size()) return std::nan("");
+        DEBUG_PRINT("initial massConcentration = " << massConcentration);
+    }
+    catch (...) {
+        return std::nan("");
+    }
+
+    if (numberOnly) return massConcentration;
+
+
+    //calculate mass prefix modifier
+    std::string massPrefixString = "";
+
+
+    size_t numeratorStart = concentration.find(numeratorUnit, i);
+    if (numeratorStart == std::string::npos) {
+        DEBUG_PRINT("Corruption 0.9");
+        return std::nan("");
+    }
+    massPrefixString = concentration.substr(i, numeratorStart - i);
+
+    DEBUG_PRINT("massPrefixString = " << massPrefixString);
+    i = numeratorStart + numeratorUnit.size() + 1;//i = first char after '/'
+    if (i >= concentration.size() || concentration[i-1] != '/') {
+        DEBUG_PRINT("Corruption 0.95");
+        return std::nan("");
+    }
+    
+
+    
+
+
+    DEBUG_PRINT("massPrefixString = " << massPrefixString);
+
+
+    std::string volumePrefixString = "";
+
+    if (!numberOnly) for (; true; ++i) {
+        if (concentration[i] == 'l' || concentration[i] == 'L') {
+            //if theres still other characters after l char
+            if (i + 1 < concentration.size()) {
+                DEBUG_PRINT("Corruption 3");
+                return std::nan("");
+            }
+            break;
+
+        }
+        else  volumePrefixString += concentration[i];
+        //if no mass unit found before string end
+        if (i >= concentration.size()) {
+            DEBUG_PRINT("Corruption 4");
+            return std::nan("");
+            break;
+        }
+    }
+
+    DEBUG_PRINT("volumePrefixString = " << volumePrefixString);
+
+
+    if (!originalConcentrationString.empty()) {
+        try {
+
+
+            double massPrefix = si_prefixes[massPrefixString];
+            if (massPrefix == 0) return std::nan("");
+            DEBUG_PRINT("massPrefix = " << massPrefix);
+
+            double volumePrefix = si_prefixes[volumePrefixString];
+            if (volumePrefix == 0) return std::nan("");
+            DEBUG_PRINT("volumePrefix = " << volumePrefix);
+
+            massConcentration *= massPrefix / volumePrefix;
+        }
+        catch (...) {
+            return std::nan("");
+        }
+
+
+        return massConcentration;
+
+    }
+
 
 }
+
 
 
 bool isOpeningBracket(char character) {
@@ -342,7 +523,7 @@ void loadAtomicMassesFromCSV() {
     while (std::getline(file, line)) {
         
 
-        int delimiterPos = line.find(',');
+        size_t delimiterPos = line.find(',');
 
         if (delimiterPos == std::string::npos) throw "atomicMassesDelimeterMissing";
 
@@ -409,7 +590,7 @@ std::vector<std::string> splitCSV(const std::string& line) {
 
 
 
-std::string normaliseMolecularFormula(const std::string& formula) {
+void normaliseMolecularFormula(std::string& formula) {
 
     std::string normalisedFormula = "";
     normalisedFormula.reserve(formula.size());
@@ -431,11 +612,25 @@ std::string normaliseMolecularFormula(const std::string& formula) {
             ++i;
             continue;
         }
-        if (byteLen <= 5 || byteLen == 1 || i+byteLen > formula.size()) throw "faulty input";
-        
+        if (byteLen >= 5 || byteLen == 1 || i + byteLen > formula.size()) {
+            addWarning("molecular formula corrupted characters or wrong encoding");//replace with warning added
+            RELEASE_PRINT("molecular formula corrupted characters or wrong encoding");
+            return;
+        }
 
         std::string utf8_char = formula.substr(i, byteLen);
-        std::cout << "UTF8 char detected: " << utf8_char << "\n";
+        DEBUG_PRINT("UTF8 char detected: " << utf8_char << "\n");
+        //char replacedChar = subscripts.at(utf8_char);
+        auto container = subscripts.find(utf8_char);
+        if (container == subscripts.end()) {
+            //maybe don't push back but ignore unknown utf8_char?
+            normalisedFormula += utf8_char;
+        }
+        else {
+            normalisedFormula.push_back(container->second);
+        }
+
+
         i += byteLen;
 
 
@@ -443,7 +638,7 @@ std::string normaliseMolecularFormula(const std::string& formula) {
 
     }
 
-    std::cout << "normalisedFormula = " << normalisedFormula << "\n";
-    return normalisedFormula;
+    DEBUG_PRINT("normalisedFormula = " << normalisedFormula);
+    formula = normalisedFormula;
 
 }
