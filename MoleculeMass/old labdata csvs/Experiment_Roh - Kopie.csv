@@ -1,8 +1,0 @@
-Timestamp,Sample,Compound,Mass conc (g/L),Molar conc (mol/L),Comment
-01-02-2023 14:23,S1,NaCl,58.44,,given in g/L
-2023/02/01 02:23PM,S2,Glucose,90,,needs conversion
-Feb 1 2023 14:23,S3,Ethanol,0.046,,very low concentration
-2023-02-01T14:23,S4,H₂SO₄,,0.05,given already in mol/L
-01.02.23 14:23,S5,CaCl₂,111,n/a,inconsistent unit
-1 Feb 2023 14:23:00,S6,NaCl,"2,922",,comma as decimal sep
-2023-02-01 14:23:45,S7,KOH,0.1 g/mL,,weird unit (g/mL)

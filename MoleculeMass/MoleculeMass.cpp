@@ -11,6 +11,7 @@
 #include <utility>
 
 #include <chrono>
+#include <filesystem>
 
 std::ofstream debugLogger("debugLog.txt");
 
@@ -35,7 +36,8 @@ float calculateMolecularMass(const std::string& molecularFormula);
 std::unordered_map<std::string, float> atomicMasses;
 float calculateAtomicMass(const std::string& atomicSymbol);
 
-
+namespace fs = std::filesystem;
+fs::path filepath;
 
 const std::string ATOMIC_MASSES_FILEPATH = "AtomicMasses.csv";
 const std::string LABDATA_FILEPATH = "Experiment_Raw.csv";
@@ -94,29 +96,30 @@ int main()
     
     auto start = std::chrono::high_resolution_clock::now();
 
-    //std::ofstream debugLogger("debugLog.txt");
-    //if (!out) ;             // Fehlerprüfung
+    RELEASE_PRINT("LabDataNormaliser started");
 
-    /*
-    std::string text = "Hallo Welt! ₀₁₂"; // Beispieltext mit Subskripten
-    debugLogger << text << "\n";
-    */
+    filepath = fs::current_path();
+    //yeah I know this is a bit cheap, but it's still within reason :D
+    if (!(fs::exists(filepath / ATOMIC_MASSES_FILEPATH) && fs::exists(filepath / LABDATA_FILEPATH)))
+        filepath = filepath.parent_path();
+    if (!(fs::exists(filepath / ATOMIC_MASSES_FILEPATH) && fs::exists(filepath / LABDATA_FILEPATH)))
+        filepath = filepath.parent_path();
+    if (!(fs::exists(filepath / ATOMIC_MASSES_FILEPATH) && fs::exists(filepath / LABDATA_FILEPATH))) {
+        RELEASE_PRINT("fatal error: labdata table or atomic masses table not found!");
+        return -1;
+    }
 
-    //DEBUG_PRINT( "why dis not in file? \n");
+
 
     loadAtomicMassesFromCSV();
 
 
-    //std::pair<std::string,std::string> joeMama;
 
-    
-
-
-    std::ofstream labdataWriter(LABDATA_CLEANED_FILEPATH);
+    std::ofstream labdataWriter(filepath / LABDATA_CLEANED_FILEPATH);
     labdataWriter << "Timestamp,Sample,Compound,Molar Mass (g/mol),Mass conc (g/L),Molar conc (mol/L),Comment,Corrupted?\n";
 
 
-    std::ifstream labdataReader(LABDATA_FILEPATH);
+    std::ifstream labdataReader(filepath / LABDATA_FILEPATH);
 
     if (!labdataReader.is_open()) {
         throw "labdata file not found";
@@ -258,7 +261,7 @@ int main()
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> duration = end - start;
-    RELEASE_PRINT("ExecutionTime: " << duration.count() << " ms");
+    RELEASE_PRINT("LabDataNormaliser finished after " << duration.count() << " ms");
 }
 
 
@@ -510,7 +513,7 @@ float calculateAtomicMass(const std::string& atomicSymbol) {
 void loadAtomicMassesFromCSV() {
 
 
-    std::ifstream file(ATOMIC_MASSES_FILEPATH);
+    std::ifstream file(filepath/ ATOMIC_MASSES_FILEPATH);
 
     if (!file.is_open()) {
         throw "atomicMassesTableNotFound";

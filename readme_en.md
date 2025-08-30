@@ -1,121 +1,23 @@
+# LabDataNormalizer
 
-# Molecule Mass Calculator
+**LabDataNormalizer** is a C++ proof-of-concept program that normalises and validates experimental lab CSV data.  
+It began as a simple molar mass calculator (*MoleculeMass*), but has since evolved into a tool for **data cleaning, unit standardisation, and plausibility checking** in laboratory workflows.
+The file to be cleaned up needs to be called Experiment_Raw.csv and the program assumes the data is formated the same way the example table is (same columns, comma seperated CSV).
+---
 
-A C++ program to calculate the molar mass of chemical compounds based on their molecular formulas. Supports nested brackets, one- and two-letter element symbols, and arbitrary quantities.
+## ✨ Features
+- **Molecular formula parsing** with support for UTF-8 subscripts (e.g. `H₂O`).
+- **Molar mass calculation** using an atomic masses table (AtomicMasses.csv).
+- **Unit normalisation** for concentration values:
+  - Mass concentration (g/L)  
+  - Molar concentration (mol/L)
+- **Auto-completion of missing values**: if one concentration (mass conc or molar conc) and molar mass is given, the program calculates the other concentration.
+- **Validation**: checks that `c_molar ≈ c_mass / M` within a tolerance (maximum of 5% deviation per default), if both values are given in a table.
+- **Data integrity**: unknown or unsupported formats (e.g. `G/l`) are **preserved and flagged**, never silently modified.
+- Converts one date format into another
 
 ---
 
-## Example Usage
+## Room for improvement
 
-```text
-> Give me a molecule!
-> enter q to quit.
-H2O
-Molecular mass: 18.015
-
-> Ca(OH)2
-Molecular mass: 74.092
-
-> q
-```
-
----
-
-## Supported Features
-
-- **Reading atomic masses** from a CSV file (`AtomicMasses.csv`)
-- **Parsing molecular formulas** including:
-  - One- and two-letter elements (e.g., `H`, `He`, `Fe`)
-  - Bracket expressions (e.g., `Mg(OH)2`, `Al2(SO4)3`)
-  - Arbitrary nesting depth: `K4[ON(SO3)2]2`
-- **Recursive calculation of molecular mass**
-- Error handling for invalid formulas
-
----
-
-## Build Instructions
-
-### Requirements
-
-- A C++17 compatible compiler (tested with `g++`, Visual Studio)
-
-### Compile (on Linux/Mac)
-
-```bash
-g++ -std=c++17 -o MoleculeMass MoleculeMass.cpp
-./MoleculeMass
-```
-
-### Compile (on Windows with g++)
-
-```cmd
-g++ -std=c++17 -o MoleculeMass.exe MoleculeMass.cpp
-MoleculeMass.exe
-```
-
-Alternatively, build with Visual Studio in Debug or Release mode (uses MSVC compiler).
-
----
-
-## CSV File: AtomicMasses.csv
-
-The file `AtomicMasses.csv` must be in the same directory as the `.exe` or binary. Format:
-
-```csv
-Symbol,AtomicMass
-H,1.008
-He,4.002602
-...
-```
-
-(The first line is a header and will be ignored.)
-
----
-
-## Project Structure
-
-```text
-MoleculeMass/
-├── MoleculeMass/               # Visual Studio project folder
-│   ├── MoleculeMass.cpp        # Main program
-│   └── AtomicMasses.csv        # Atomic mass table
-├── MoleculeMass.sln            # Microsoft Visual Studio solution file
-├── .gitignore                  # Git configuration
-└── README.md                   # This file
-```
-
----
-
-## Known Limitations
-
-- No support for charged ions like `Fe3+`
-- No comprehensive chemical error checking (e.g., valence validation)
-
----
-
-## Example Molecules for Testing
-
-| Formula       | Molar Mass (g/mol) |
-| ------------- | ------------------ |
-| H2O           | 18.015             |
-| CO2           | 44.009             |
-| C6H12O6       | 180.156            |
-| Ca(OH)2       | 74.092             |
-| ((CH3)3C)2O   | 130.23             |
-
----
-
-## About the Project
-
-This project was created as a private programming exercise focusing on:
-
-- Recursion and parsing
-- Error handling in C++
-- File processing
-- Using Git and branch strategies
-
----
-
-## License
-
-This project is provided without a license for personal use only. Please do not reuse without permission.
+The program currently expects the inputfile to be named Experiment_Raw.csv and the output file will be named Experiment_Cleaned.csv. The program could instead have custom names or have a folder of input files where any file will be processed. The tolerance for concentration deviations could be made easier to change. More date formats could be supported and there could be more through checks if a correct date format is actually present in the timestamp

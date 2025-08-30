@@ -20,3 +20,7 @@
 Debug/
 Release/
 x64/
+StartLabDataNormalizer.cmd
+trash/
+Experiment_Cleaned.csv
+debugLog.txt

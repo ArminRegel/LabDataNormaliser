@@ -1,122 +1,28 @@
-# Molecule Mass Calculator
+# LabDataNormalizer
 
-Ein C++-Programm zur Berechnung der molaren Masse chemischer Verbindungen anhand ihrer Summenformeln. Unterstützt sind verschachtelte Klammern, zwei- und einbuchstabige Elementsymbole sowie beliebige Vorkommensanzahlen.
-
----
-
-## Beispielhafte Nutzung
-
-```text
-> Give me a molecule!
-> enter q to quit.
-H2O
-Molecular mass: 18.015
-
-> Ca(OH)2
-Molecular mass: 74.092
-
-> q
-```
+**LabDataNormalizer** ist ein C++-Proof-of-Concept-Programm zur Normalisierung und Validierung experimenteller Labor-CSV-Daten.  
+Es begann als einfacher Molmassen-Rechner (*MoleculeMass*) und hat sich zu einem Tool für **Datenbereinigung, Einheiten-Standardisierung und Plausibilitätsprüfungen** in Labor-Workflows entwickelt.  
+Die zu bereinigende Datei muss **Experiment_Raw.csv** heißen; das Programm geht davon aus, dass die Daten wie in der Beispiel­tabelle formatiert sind (gleiche Spalten, kommaseparierte CSV).
 
 ---
 
-## Unterstützte Features
-
-- **Einlesen von Atommassen** aus einer CSV-Datei (`AtomicMasses.csv`)
-- **Parsing von Summenformeln** inklusive:
-  - Ein- und Zweibuchstaben-Elemente (z. B. `H`, `He`, `Fe`)
-  - Klammerausdrücke (z. B. `Mg(OH)2`, `Al2(SO4)3`)
-  - Verschachtelung beliebiger Tiefe: `K4[ON(SO3)2]2`
-- **Rekursive Berechnung der Molekülmasse**
-- Fehlerbehandlung bei ungültigen Formeln
-
----
-
-## Build-Anleitung
-
-### Voraussetzungen
-
-- Ein C++17-kompatibler Compiler (getestet mit `g++`, Visual Studio)
-
-### Kompilieren (unter Linux/Mac)
-
-```bash
-g++ -std=c++17 -o MoleculeMass MoleculeMass.cpp
-./MoleculeMass
-```
-
-### Kompilieren (unter Windows mit g++)
-
-```cmd
-g++ -std=c++17 -o MoleculeMass.exe MoleculeMass.cpp
-MoleculeMass.exe
-```
-
-Alternativ über Visual Studio im Debug- oder Release-Modus (nutzt MSVC-Compiler).
+## ✨ Funktionen
+- **Parsing chemischer Formeln** mit Unterstützung für UTF-8-Tiefstellungen (z. B. `H₂O`).
+- **Berechnung der Molmasse** mithilfe einer Tabelle mit Atom­massen (`AtomicMasses.csv`).
+- **Einheiten-Standardisierung** für Konzentrationswerte:
+  - Massenkonzentration (g/L)  
+  - Stoffmengenkonzentration (mol/L)
+- **Automatisches Ergänzen fehlender Werte**: Wenn eine der beiden Konzentrationen (Massen- oder Stoffmengen­konzentration) **und** die Molmasse gegeben sind, berechnet das Programm die jeweils andere Konzentration.
+- **Validierung**: Prüft, dass `c_molar ≈ c_mass / M` innerhalb einer Toleranz liegt (standardmäßig max. **5 %** Abweichung), sofern beide Konzentrationswerte in der Tabelle vorhanden sind.
+- **Datenintegrität**: Unbekannte oder nicht unterstützte Formate (z. B. `G/l`) werden **beibehalten und markiert** – niemals stillschweigend verändert.
+- **Datumsformat-Konvertierung** zwischen vorgegebenen Formaten.
 
 ---
 
-## CSV-Datei: AtomicMasses.csv
+## Verbesserungspotenzial
 
-Die Datei `AtomicMasses.csv` muss im selben Verzeichnis wie die `.exe` bzw. das Binary liegen. Format:
-
-```csv
-Symbol,AtomicMass
-H,1.008
-He,4.002602
-...
-```
-
-(Die erste Zeile ist eine Kopfzeile und wird ignoriert.)
-
----
-
-## Projektstruktur
-
-```text
-MoleculeMass/
-├── MoleculeMass/               # Visual-Studio-Projektordner
-│   ├── MoleculeMass.cpp        # Hauptprogramm
-│   └── AtomicMasses.csv        # Tabelle mit Atommassen
-├──  MoleculeMass.sln           # Microsoft Visual Studio Projektdatei
-├── .gitignore                  # Git-Konfiguration
-└── README.md                   # Diese Datei
-```
-
----
-
-## Bekannte Einschränkungen
-
-- Keine Unterstützung für geladene Ionen wie `Fe3+`
-- Kein vollständiges chemisches Fehlerhandling (z. B. Valenzprüfung)
-
----
-
-## Beispiel-Moleküle zum Testen
-
-| Formel        | Molarität (g/mol) |
-| ------------- | ----------------- |
-| H2O           | 18.015            |
-| CO2           | 44.009            |
-| C6H12O6       | 180.156           |
-| Ca(OH)2       | 74.092            |
-| ((CH3)3C)2O   | 130.23            |
-
----
-
-## Über das Projekt
-
-Dieses Projekt entstand als private Programmierübung zur vertieften Beschäftigung mit:
-
-- Rekursion und Parsing
-- Fehlerbehandlung in C++
-- Dateiverarbeitung
-- Umgang mit Git und Branch-Strategien
-
-
----
-
-## Lizenz
-
-Dieses Projekt steht ohne Lizenz unter persönlicher Nutzung. Bitte nicht ohne Zustimmung weiterverwenden.
-
+Aktuell erwartet das Programm die Eingabedatei mit dem Namen **Experiment_Raw.csv**; die Ausgabedatei heißt **Experiment_Cleaned.csv**.  
+Mögliche Erweiterungen:
+- frei wählbare Dateinamen oder ein Eingabeordner, in dem **alle** Dateien verarbeitet werden,
+- leichter konfigurierbare Toleranz für Abweichungen der Konzentrationen,
+- Unterstützung weiterer Datumsformate sowie **gründlichere Prüfungen**, ob im Zeitstempel tatsächlich ein korrektes Datumsformat vorliegt.
