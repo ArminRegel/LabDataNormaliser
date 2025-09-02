@@ -15,9 +15,11 @@ Die zu bereinigende Datei muss **Experiment_Raw.csv** heißen; das Programm geht
 - **Automatisches Ergänzen fehlender Werte**: Wenn eine der beiden Konzentrationen (Massen- oder Stoffmengen­konzentration) **und** die Molmasse gegeben sind, berechnet das Programm die jeweils andere Konzentration.
 - **Validierung**: Prüft, dass `c_molar ≈ c_mass / M` innerhalb einer Toleranz liegt (standardmäßig max. **5 %** Abweichung), sofern beide Konzentrationswerte in der Tabelle vorhanden sind.
 - **Datenintegrität**: Unbekannte oder nicht unterstützte Formate (z. B. `G/l`) werden **beibehalten und markiert** – niemals stillschweigend verändert.
+- **Portables Release**: Läuft sowohl in Visual Studio als auch als eigenständige `.exe`.
 - **Datumsformat-Konvertierung** zwischen vorgegebenen Formaten.
 
 ---
+
 
 ## Verbesserungspotenzial
 
@@ -26,3 +28,11 @@ Mögliche Erweiterungen:
 - frei wählbare Dateinamen oder ein Eingabeordner, in dem **alle** Dateien verarbeitet werden,
 - leichter konfigurierbare Toleranz für Abweichungen der Konzentrationen,
 - Unterstützung weiterer Datumsformate sowie **gründlichere Prüfungen**, ob im Zeitstempel tatsächlich ein korrektes Datumsformat vorliegt.
+
+---
+
+🛠️ Build erstellen (Visual Studio)
+
+1. Öffnen Sie die Solution Datei (MoleculeMass.sln).
+2. Stellen Sie Konfiguration = Release, Plattform = x64 ein.
+3. Kompilieren oder starten (F5) Sie die Solution; die ausführbare Datei wird unter x64\Release\ erzeugt.

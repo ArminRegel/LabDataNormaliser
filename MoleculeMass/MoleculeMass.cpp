@@ -174,6 +174,7 @@ int main()
 
 
 
+
         //will become safified if it has corrupted content
         std::string massConcentrationLine = CSV_Line[3];
         std::string molConcentrationLine = CSV_Line[4];
