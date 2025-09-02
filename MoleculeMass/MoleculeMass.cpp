@@ -39,8 +39,8 @@ float calculateAtomicMass(const std::string& atomicSymbol);
 namespace fs = std::filesystem;
 fs::path filepath;
 
-const std::string ATOMIC_MASSES_FILEPATH = "AtomicMasses.csv";
-const std::string LABDATA_FILEPATH = "Experiment_Raw.csv";
+const std::string ATOMIC_MASSES_FILENAME = "AtomicMasses.csv";
+const std::string LABDATA_FILENAME = "Experiment_Raw.csv";
 const std::string LABDATA_CLEANED_FILEPATH = "Experiment_Cleaned.csv";
 
 bool isOpeningBracket(char character);
@@ -100,11 +100,11 @@ int main()
 
     filepath = fs::current_path();
     //yeah I know this is a bit cheap, but it's still within reason :D
-    if (!(fs::exists(filepath / ATOMIC_MASSES_FILEPATH) && fs::exists(filepath / LABDATA_FILEPATH)))
+    if (!(fs::exists(filepath / ATOMIC_MASSES_FILENAME) && fs::exists(filepath / LABDATA_FILENAME)))
         filepath = filepath.parent_path();
-    if (!(fs::exists(filepath / ATOMIC_MASSES_FILEPATH) && fs::exists(filepath / LABDATA_FILEPATH)))
+    if (!(fs::exists(filepath / ATOMIC_MASSES_FILENAME) && fs::exists(filepath / LABDATA_FILENAME)))
         filepath = filepath.parent_path();
-    if (!(fs::exists(filepath / ATOMIC_MASSES_FILEPATH) && fs::exists(filepath / LABDATA_FILEPATH))) {
+    if (!(fs::exists(filepath / ATOMIC_MASSES_FILENAME) && fs::exists(filepath / LABDATA_FILENAME))) {
         RELEASE_PRINT("fatal error: labdata table or atomic masses table not found!");
         return -1;
     }
@@ -119,7 +119,7 @@ int main()
     labdataWriter << "Timestamp,Sample,Compound,Molar Mass (g/mol),Mass conc (g/L),Molar conc (mol/L),Comment,Corrupted?\n";
 
 
-    std::ifstream labdataReader(filepath / LABDATA_FILEPATH);
+    std::ifstream labdataReader(filepath / LABDATA_FILENAME);
 
     if (!labdataReader.is_open()) {
         throw "labdata file not found";
@@ -197,7 +197,21 @@ int main()
                 addWarning("mass concentration corrupted");
                 make_csv_safe(massConcentrationLine);
                 labdataWriter << massConcentrationLine << ',';
-                //is mol concentration missing? YES!
+                //is mol concentration missing? NOT ANYMORE!
+                if (molConcentrationLine != "") {
+
+                
+                    if (std::isnan(molConcentrationParsed)) {
+                        addWarning("mol concentration corrupted");
+                        make_csv_safe(molConcentrationLine);
+                        labdataWriter << molConcentrationLine;
+
+                    }
+                    else {
+                        labdataWriter << molConcentrationParsed;
+                    }
+                }
+
             }
             //else == if (proper massConcentration)
             else {
@@ -513,7 +527,7 @@ float calculateAtomicMass(const std::string& atomicSymbol) {
 void loadAtomicMassesFromCSV() {
 
 
-    std::ifstream file(filepath/ ATOMIC_MASSES_FILEPATH);
+    std::ifstream file(filepath/ ATOMIC_MASSES_FILENAME);
 
     if (!file.is_open()) {
         throw "atomicMassesTableNotFound";

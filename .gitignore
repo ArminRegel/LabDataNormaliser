@@ -22,5 +22,8 @@ Release/
 x64/
 StartLabDataNormalizer.cmd
 trash/
+examples/
 Experiment_Cleaned.csv
+Experiment_Cleaned_Visualised.xls
+Experiment_Raw_Visualised.xls
 debugLog.txt

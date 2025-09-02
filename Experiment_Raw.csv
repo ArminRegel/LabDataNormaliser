@@ -31,3 +31,4 @@ Timestamp,Sample,Compound,Mass conc (g/L),Molar conc (mol/L),Comment
 06-02-2023 02:53,S30,MgCl2,0.050 G/L,0.05,"both conc.,case variant,unit variant"
 2023-02-06 03:30,S31,FeCl3,111 g/L,,only mass
 06-02-2023 04:07,S32,H₂O,34.5 g/l,,only mass
+2023-02-06 05:32,S33,H2O,2.922 g/L,0.1622,both conc.
